@@ -4,6 +4,8 @@
 A command line tool for checking email from the terminal
 ## Install
 `pip install climail`
+## Opening CLIMail
+CLIMail is opened straight from the command line by running the command `climail`
 ## Logging in
 The first time CLIMail is opened, the login prompt will require the user to enter three things:
 1. Username (example: user@example.com)
