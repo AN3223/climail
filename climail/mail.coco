@@ -1,0 +1,89 @@
+import email
+import email.policy
+from email.message import EmailMessage
+
+from .text import *
+
+COLUMN_SIZES = (16, 5, 20, 19, 30)
+# TODO: Make these scale to the size of the terminal
+
+COLUMN_TITLES = ("Folder", "ID", "Subject", "Date", "Sender")
+
+
+def home_screen(client, page=0):
+    viewport_y = Terminal.lines() - 4
+    cutoff = .[:viewport_y]
+
+    start = page * viewport_y
+    paged = .[start:viewport_y + start]
+
+    ids = fetch_ids(client) |> paged
+    folders = fetch_folders(client) |> cutoff
+    headers = fetch_headers(client, ids)
+
+    def tag(s) = map(.[s], headers)
+    subjects = "Subject" |> tag
+    dates =    "Date"    |> tag
+    froms =    "From"    |> tag
+
+    _print_home_screen(viewport_y, folders, ids, subjects, dates, froms)
+
+
+def _print_home_screen(rows, *columns):
+    def get_row_values(index) =
+        columns |> map$(x -> get(x, index) ?? "")
+
+    viewport_x = Terminal.columns() - 2
+    prevent_overflow = limit$(viewport_x)
+    print_columnized = printl .. prevent_overflow .. columnize$(COLUMN_SIZES)
+    print_row_values = print_columnized .. get_row_values
+
+    clear()
+    Terminal.seperatorp()
+    COLUMN_TITLES |> print_columnized
+    range(rows)   |> map$(print_row_values) |> consume
+    Terminal.seperatorp()
+
+
+def read_email(message):
+    clear()
+    message.get_body(preferencelist=['plain']) |> print
+
+
+def get(obj, key):
+    """
+    Safely slices an object, returns None in place of raising an IndexError
+    """
+    try:
+        return obj[key]
+    except IndexError:
+        return None
+
+
+def parse_response(fetch, response, id) =
+    response[id][fetch] |> email.message_from_bytes$(
+        _class=EmailMessage, policy=email.policy.default
+    )
+
+
+def fetch_headers(client, ids):
+    fetch = b"BODY[HEADER]"
+    response = client.fetch(ids, fetch)
+    return map(parse_response$(fetch, response), ids)
+
+
+def fetch_emails(client, ids):
+    fetch = b"BODY[]"
+    response = client.fetch(ids, fetch)
+    return map(parse_response$(fetch, response), ids)
+
+
+def fetch_email(client, id) = fetch_emails(client, [id])[0]
+
+
+def fetch_folders(client) =
+    client.list_folders() |> map$(third) where:
+        third = def ((x, y, z)) -> z
+
+
+def fetch_ids(client) = client.search("ALL") |> reversed

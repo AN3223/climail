@@ -1,0 +1,81 @@
+import json
+from imapclient import IMAPClient
+from contextlib import contextmanager
+
+from .text import *
+from .mail import *
+
+
+def refresh(*args):
+    loading_screen()
+    home_screen(*args)
+
+
+def run_action(client, action):
+    case action:
+        match ":refresh" or ":r":
+            refresh(client)
+        match ":folder " + folder:
+            client.select_folder(folder)
+            refresh(client)
+        match ":home":
+            client.select_folder("INBOX")
+            refresh(client)
+        match ":read " + id:
+            fetch_email(client, int(id)) |> read_email
+            input("\nPress ENTER to continue")
+            refresh(client)
+        match ":page " + pageno:
+            refresh(client, int(pageno))
+        match ":login":
+            login()
+            main()
+        match ":quit" or ":q":
+            clear()
+            exit()
+        match fail:
+            pass
+
+
+@contextmanager
+def client_manager(host, username, password):
+    with IMAPClient(host=host) as client:
+        client.login(username, password)
+        yield client
+
+
+def login():
+    "LOGIN\n-----\n" |> print
+    username = input("Username: ")
+    password = input("Password: ")
+    host = input("Host: ")
+
+    credentials = {
+        "username": username,
+        "password": password,
+        "host": host
+    }
+
+    with open('climail_credentials.json', 'w+') as f:
+        f.write(json.dumps(credentials))
+
+    return credentials
+
+
+def main():
+    try:
+        with open('climail_credentials.json') as f:
+            credentials = json.loads(f.read())
+    except FileNotFoundError:
+        credentials = login()
+
+    user = credentials["username"]
+    passw = credentials["password"]
+    host = credentials["host"]
+
+    loading_screen()
+    with client_manager(host, user, passw) as client:
+        client.select_folder("INBOX")
+        home_screen(client)
+        while True:
+            run_action(client, input())

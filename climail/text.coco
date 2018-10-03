@@ -1,0 +1,79 @@
+import os
+import re
+import math
+from fpbox import sum
+
+
+data Terminal:
+    """Collection of helper functions for working with the terminal"""
+    def columns() = os.get_terminal_size()[0]
+    def lines() = os.get_terminal_size()[1]
+    def seperator() = '-' * Terminal.columns()
+    def seperatorp() = Terminal.seperator() |> print
+
+
+data Align(border_l, fill_l, s, fill_r, border_r):
+    """Data structure for representing text alignment"""
+    def __str__(self) = self |> sum
+    def print(self) = str(self) |> print
+
+    def left((border_l, l, s, r, border_r)) =
+        Align(border_l, s, l, r, border_r)
+
+    def right((border_l, l, s, r, border_r)) =
+        Align(border_l, l, r, s, border_r)
+
+
+def printl(s) = align(s).left().print()
+def printr(s) = align(s).right().print()
+
+
+def align(*s, border='|'):
+    viewport_x = Terminal.columns() - len(border) * 2
+    s = ' '.join(s) if s else ''
+
+    fill_l = ' ' * (viewport_x // 2 - len(s) // 2)
+    fill_r = ' ' * (math.ceil(viewport_x / 2) - math.ceil(len(s) / 2))
+    return Align(border, fill_l, s, fill_r, border)
+
+
+def clear() = os.system(
+    'cls' if os.name == 'nt' else 'clear'
+)
+
+
+def limit(size, s):
+    """
+    Force a string to a certain length. If it's too short, it will be brought to length
+    with spaces. If it's too long, it will be cut down with elipsis (...) at the end.
+
+    :param size: The cutoff point
+    :param s: The target string
+    :return: The limited string
+    """
+    if len(s) <= size:
+        return s + ' ' * (size - len(s))
+    else:
+        return s[:size - 3] + '...'
+
+
+def columnize(sizes, columns) = ' | '.join(
+        str(col) |> remove_emojis |> limit$(size) for size, col in zip(sizes, columns)
+)
+
+
+def loading_screen():
+    viewport_y = Terminal.lines() - 3
+
+    clear()
+    Terminal.seperatorp()
+    for line in range(viewport_y):
+        if line == viewport_y // 2:
+            align("L O A D I N G . . .").print()
+        else:
+            align().print()
+    Terminal.seperatorp()
+
+
+RE_EMOJI = re.compile('[\U00010000-\U0010ffff]', flags=re.UNICODE)
+def remove_emojis(string) = RE_EMOJI.sub(r'', string).strip()
