@@ -14,23 +14,32 @@ def refresh(*args):
 def run_action(client, action):
     case action:
         match ":refresh" or ":r":
+            """Refreshes the client"""
             refresh(client)
         match ":folder " + folder:
+            """Selects the specified folder"""
             client.select_folder(folder)
             refresh(client)
         match ":home":
+            """Alias for ':folder INBOX'"""
             client.select_folder("INBOX")
             refresh(client)
         match ":read " + id:
+            """Reads the email specified by the given ID"""
             fetch_email(client, int(id)) |> read_email
             input("\nPress ENTER to continue")
             refresh(client)
         match ":page " + pageno:
+            """
+            Change which 'page' of emails is currently being displayed (zero-indexed)
+            """
             refresh(client, int(pageno))
         match ":login":
+            """Logs in to a different account"""
             login()
-            main()
+            main()  # Potential resource issue, the previous connection is never closed
         match ":quit" or ":q":
+            """Exit CLIMail"""
             clear()
             exit()
         match fail:
