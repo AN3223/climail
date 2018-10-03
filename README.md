@@ -1,3 +1,5 @@
+![Viewing an inbox with CLIMail](https://i.imgur.com/eq34i8K.png)
+
 # CLIMail
 A command line tool for checking email from the terminal
 ## Install
