@@ -19,18 +19,24 @@ After the client is logged in and loaded up, interaction with the client is done
 case action:
     match ":refresh" or ":r":
         """Refreshes the client"""
+        
     match ":folder " + folder:
         """Selects the specified folder"""
+        
     match ":home":
         """Alias for ':folder INBOX'"""
+        
     match ":read " + id:
         """Reads the email specified by the given ID"""
+        
     match ":page " + pageno:
         """
         Change which 'page' of emails is currently being displayed (zero-indexed)
         """
+        
     match ":login":
         """Logs in to a different account"""
+        
     match ":quit" or ":q":
         """Exit CLIMail"""
 ```
