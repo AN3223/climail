@@ -40,3 +40,5 @@ case action:
     match ":quit" or ":q":
         """Exit CLIMail"""
 ```
+
+It's called CLIMail because I did not know the difference between TUI and CLI when I wrote this :)
